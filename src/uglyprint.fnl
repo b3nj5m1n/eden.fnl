@@ -37,7 +37,7 @@
    :comma (sn.color "," up.colors.comma)
    :colon (sn.color ":" up.colors.colon)
 
-   :quotes (sn.color ":" up.colors.quotes)})
+   :quotes (sn.color "\"" up.colors.quotes)})
 
 (fn up.colorise-dict [x]
   (var result "")
@@ -78,7 +78,7 @@
 (fn up.colorise-number [x]
   (sn.color (tostring x) up.colors.number))
 (fn up.colorise-string [x]
-  (sn.color (tostring x) up.colors.string))
+  (.. up.separators.quotes (sn.color (tostring x) up.colors.string) up.separators.quotes))
 (fn up.colorise-function [x]
   (sn.italic.color "function" up.colors.function))
 
@@ -97,5 +97,8 @@
     (up.colorise-string x)
     "function"
     (up.colorise-function x)))
+
+(fn up.pp [x]
+  (print (up.colorise x)))
 
 up
