@@ -1,0 +1,6 @@
+[submodule "pkgs/supernova"]
+	path = pkgs/supernova
+	url = git@github.com:gbaptista/supernova.git
+[submodule "pkgs/fspec"]
+	path = pkgs/fspec
+	url = git@github.com:gbaptista/fspec.git
