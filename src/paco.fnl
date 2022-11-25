@@ -2,39 +2,44 @@
 
 ; Simple parser combinator
 
-(fn is-empty [s]
+(var paco {})
+
+(fn paco.is-empty [s]
+  "Check if the string is literally empty, whitespace doesn't count as empty
+  since you might want to do something with that"
   (or (= s nil) (= s "")))
 
-(fn reduce [reduce-func parsers]
-  (var val (reduce-func (. parsers 1) (. parsers 2)))
-  (each [i parser (ipairs parsers)]
+(fn paco.reduce [reduce-func list]
+  "Apply function to every pair of elements in the list, taking the result as
+  the first element in the next iteration to reduce to single value"
+  (var val (reduce-func (. list 1) (. list 2)))
+  (each [i elem (ipairs list)]
     (when (> i 2)
-      (set val (reduce-func val parser))))
+      (set val (reduce-func val elem))))
   val)
 
-(fn flatten [input flattened]
+(fn paco.flatten [input flattened]
+  "Flatten multi-dimensional array to single dimension while preserving order"
   (set-forcibly! flattened (or flattened {}))
   (each [i element (ipairs input)]
     (if (and (= (type element) :table))
-        (flatten element flattened)
-        (when (not= element "")
-          (table.insert flattened element))))
+        (paco.flatten element flattened)
+        (table.insert flattened element)))
   flattened)
 
 
 
-
-(var paco {})
-
 (set paco.status {:ok 1 :error 0})
 
 (fn paco.gen-success [result remaining line col]
+  "Generate input/output table for successful parsing"
   {:status paco.status.ok
    :result result
    :remaining remaining
    :line line
    :col col})
 (fn paco.gen-failure [message remaining line col]
+  "Generate input/output table for unsuccessful parsing"
   {:status paco.status.error
    :result message
    :remaining remaining
@@ -43,8 +48,10 @@
    
 
 (fn paco.p-char [char-to-match]
+  "Parse a single character
+  (character as in byte, use str for unicode character)"
   (fn [input]
-    (if (is-empty input.remaining)
+    (if (paco.is-empty input.remaining)
       (paco.gen-failure "No more input" input.line input.col)
       (let [first (input.remaining:sub 1 1)]
         (if (= first char-to-match)
@@ -54,6 +61,7 @@
           (paco.gen-failure (.. "Expecting '" char-to-match "', got '" first "'.") input.remaining input.line input.col))))))
 
 (fn paco.p-str [string-to-match]
+  "Parse a string"
   (var parsers [])
   (each [c (string-to-match:gmatch ".")]
     (table.insert parsers (paco.p-char c)))
@@ -64,16 +72,18 @@
 
 
 (fn paco.p-and [parser-1 parser-2]
+  "Combine two parsers, succeed if both succeed"
   (fn [input]
     (let [result-1 (parser-1 input)]
       (if (= result-1.status paco.status.error)
         result-1
         (let [result-2 (parser-2 result-1)]
           (if (= result-2.status paco.status.error)
-            result-2
-            (paco.gen-success (flatten [ result-1.result result-2.result ]) result-2.remaining result-2.line result-2.col)))))))
+            (paco.gen-failure result-2.result input.remaining input.line input.col)
+            (paco.gen-success (paco.flatten [ result-1.result result-2.result ]) result-2.remaining result-2.line result-2.col)))))))
 
 (fn paco.p-or [parser-1 parser-2]
+  "Combine two parsers, succeed if one of them succeeds"
   (fn [input]
     (let [result-1 (parser-1 input)]
       (if (= result-1.status paco.status.ok)
@@ -88,13 +98,12 @@
               (paco.gen-failure (.. "Either: " error-1 ", or " error-2) input.remaining input.line input.col))))))))
 
 (fn paco.p-chain [parsers]
-  (reduce paco.p-and parsers))
+  "Combine an arbitrary amount of parsers, succeed if all of them succeed"
+  (paco.reduce paco.p-and parsers))
 
-(fn paco.p-chooose [parsers]
-  (reduce paco.p-or parsers))
-
-(fn paco.parse [parser input]
-  (parser (paco.gen-success "" input 0 0)))
+(fn paco.p-choose [parsers]
+  "Combine an arbitrary amount of parsers, succeed if one of them succeeds"
+  (paco.reduce paco.p-or parsers))
 
 (fn paco.p-map [f parser]
   (fn [input]
@@ -107,7 +116,7 @@
   (var parsers [])
   (each [i char (ipairs chars)] 
     (table.insert parsers (paco.p-char char)))
-  (paco.p-chooose parsers))
+  (paco.p-choose parsers))
 
 (fn paco.p-return [x]
   (fn [input]
@@ -119,7 +128,7 @@
       (if (= result.status paco.status.error)
         (paco.gen-success "" input.remaining input.line input.col)
         (let [more ((paco.p-zero-or-more parser) result)]
-          (paco.gen-success (flatten [ result.result more.result ]) more.remaining more.line more.col))))))
+          (paco.gen-success (paco.flatten [ result.result more.result ]) more.remaining more.line more.col))))))
 
 (fn paco.p-many [parser]
   (fn [input]
@@ -131,7 +140,7 @@
     (if (= first-result.status paco.status.error)
       first-result
       (let [more ((paco.p-zero-or-more parser) first-result)]
-        (paco.gen-success (flatten [ first-result.result more.result ]) more.remaining more.line more.col)))))
+        (paco.gen-success (paco.flatten [ first-result.result more.result ]) more.remaining more.line more.col)))))
 
 (fn paco.p-option [parser]
   (fn [input]
@@ -147,6 +156,9 @@
         result
         (paco.gen-success "" result.remaining result.line result.col)))))
 
+(fn paco.parse [parser input]
+  "Apply parser"
+  (parser (paco.gen-success "" input 0 0)))
 
 
 (local p-A (paco.p-char "A"))
@@ -157,7 +169,7 @@
 (local p-CD (paco.p-and p-C p-D))
 (local p-A-or-B (paco.p-or p-AB p-CD))
 (local p-ABCD (paco.p-chain [p-A p-B p-C p-D]))
-(local p-A-or-B-or-C (paco.p-chooose [p-A p-B p-C]))
+(local p-A-or-B-or-C (paco.p-choose [p-A p-B p-C]))
 (local p-digit (paco.p-any ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9"]))
 (local p-whitespace (paco.p-map (fn [s] "") (paco.p-many (paco.p-any [" " "\t" "\n"]))))
 (local p-number
@@ -184,3 +196,5 @@
 ; (up.pp (paco.parse (paco.p-str "moin") "mojnsen"))
 ; (up.pp (paco.parse (paco.p-and p-whitespace p-digit) "   1ojnsen"))
 ; (up.pp (paco.parse (paco.p-zero-or-more (paco.p-str "moin")) "moinmoinsen"))
+
+paco
