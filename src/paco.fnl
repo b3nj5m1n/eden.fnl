@@ -106,6 +106,7 @@
   (paco.reduce paco.p-or parsers))
 
 (fn paco.p-map [f parser]
+  "Apply function to result of parser"
   (fn [input]
     (let [result (parser input)]
       (if (= result.status paco.status.ok)
@@ -113,16 +114,14 @@
         result))))
 
 (fn paco.p-any [chars]
+  "Match any of the passed characters"
   (var parsers [])
   (each [i char (ipairs chars)] 
     (table.insert parsers (paco.p-char char)))
   (paco.p-choose parsers))
 
-(fn paco.p-return [x]
-  (fn [input]
-    (paco.gen-success x input.remaining input.line input.col)))
-
 (fn paco.p-zero-or-more [parser]
+  "Match parser zero or an arbitrary number of times"
   (fn [input]
     (let [result (parser input)]
       (if (= result.status paco.status.error)
@@ -131,10 +130,12 @@
           (paco.gen-success (paco.flatten [ result.result more.result ]) more.remaining more.line more.col))))))
 
 (fn paco.p-many [parser]
+  "Match parser zero or an arbitrary number of times (alias)"
   (fn [input]
     ((paco.p-zero-or-more parser) input)))
 
 (fn paco.p-many1 [parser]
+  "Match parser one or more times"
   (fn [input]
     (local first-result (parser input))
     (if (= first-result.status paco.status.error)
@@ -143,6 +144,7 @@
         (paco.gen-success (paco.flatten [ first-result.result more.result ]) more.remaining more.line more.col)))))
 
 (fn paco.p-option [parser]
+  "Match parser zero or one time"
   (fn [input]
     (let [result (parser input)]
       (if (= result.status paco.status.error)
@@ -150,6 +152,7 @@
         result))))
 
 (fn paco.p-discard [parser]
+  "Match parser one time but discard the result"
   (fn [input]
     (let [result (parser input)]
       (if (= result.status paco.status.error)
