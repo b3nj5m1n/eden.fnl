@@ -1,4 +1,3 @@
-
 (local t (require :fspec))
 
 (local p (require :paco))
@@ -50,7 +49,7 @@
 (t.eq (p.parse (p.p-or (p.p-char "a") (p.p-char "b")) "cdef") (p.gen-failure "Either: Expecting 'a', got 'c'., or Expecting 'b', got 'c'." "cdef" 0 0))
 
 ; p-chain
-(t.eq (p.parse (p.p-chain [(p.p-char "a") (p.p-char "b") (p.p-char "c")]) "abcdef") (p.gen-success ["a" "b" "c"] "def" 0 3))
+(t.eq (p.parse (p.p-chain [(p.p-char "a") (p.p-char "b") (p.p-char "c")]) "abcdef") (p.gen-success [[ "a" "b" ] "c"] "def" 0 3))
 
 ; p-choose
 (t.eq (p.parse (p.p-choose [(p.p-char "a") (p.p-char "b") (p.p-char "c")]) "abcdef") (p.gen-success "a" "bcdef" 0 1))
@@ -60,7 +59,7 @@
 ; p-map
 (t.eq (p.parse (p.p-map
                  (fn [chars]
-                   (icollect [i char (ipairs chars)]
+                   (icollect [i char (ipairs (p.flatten chars))]
                      (.. char "-")))
                  (p.p-chain [(p.p-char "a") (p.p-char "b") (p.p-char "c")])) "abcdef")
       (p.gen-success ["a-" "b-" "c-"] "def" 0 3))
@@ -70,7 +69,7 @@
 
 ; p-zero-or-more
 (t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "abcdef") (p.gen-success [ "a" "" ] "bcdef" 0 1))
-(t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" "a" "a" "a" "a" "" ] "bcdef" 0 5))
+(t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" [ "a" [ "a" [ "a" [ "a" "" ] ] ] ] ] "bcdef" 0 5))
 (t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "bcdef") (p.gen-success "" "bcdef" 0 0))
 
 ; p-many
@@ -80,7 +79,7 @@
 
 ; p-many1
 (t.eq (p.parse (p.p-many1 (p.p-char "a")) "abcdef") (p.gen-success [ "a" "" ] "bcdef" 0 1))
-(t.eq (p.parse (p.p-many1 (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" "a" "a" "a" "a" "" ] "bcdef" 0 5))
+(t.eq (p.parse (p.p-many1 (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" [ "a" [ "a" [ "a" [ "a" "" ] ] ] ] ] "bcdef" 0 5))
 (t.eq (p.parse (p.p-many1 (p.p-char "a")) "bcdef") (p.gen-failure "Expecting 'a', got 'b'." "bcdef" 0 0))
 
 ; p-option

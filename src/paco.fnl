@@ -67,7 +67,7 @@
     (table.insert parsers (paco.p-char c)))
   (paco.p-map 
     (fn [s] 
-      (accumulate [result "" i current (ipairs s)] (.. result current)))
+      (accumulate [result "" i current (ipairs (paco.flatten s))] (.. result current)))
     (paco.p-chain parsers)))
 
 
@@ -80,7 +80,7 @@
         (let [result-2 (parser-2 result-1)]
           (if (= result-2.status paco.status.error)
             (paco.gen-failure result-2.result input.remaining input.line input.col)
-            (paco.gen-success (paco.flatten [ result-1.result result-2.result ]) result-2.remaining result-2.line result-2.col)))))))
+            (paco.gen-success [ result-1.result result-2.result ] result-2.remaining result-2.line result-2.col)))))))
 
 (fn paco.p-or [parser-1 parser-2]
   "Combine two parsers, succeed if one of them succeeds"
@@ -127,7 +127,7 @@
       (if (= result.status paco.status.error)
         (paco.gen-success "" input.remaining input.line input.col)
         (let [more ((paco.p-zero-or-more parser) result)]
-          (paco.gen-success (paco.flatten [ result.result more.result ]) more.remaining more.line more.col))))))
+          (paco.gen-success [ result.result more.result ] more.remaining more.line more.col))))))
 
 (fn paco.p-many [parser]
   "Match parser zero or an arbitrary number of times (alias)"
@@ -141,7 +141,7 @@
     (if (= first-result.status paco.status.error)
       first-result
       (let [more ((paco.p-zero-or-more parser) first-result)]
-        (paco.gen-success (paco.flatten [ first-result.result more.result ]) more.remaining more.line more.col)))))
+        (paco.gen-success [ first-result.result more.result ] more.remaining more.line more.col)))))
 
 (fn paco.p-option [parser]
   "Match parser zero or one time"
