@@ -57,8 +57,21 @@
         (if (= first char-to-match)
           (let [line (if (= first "\n") (+ input.line 1) input.line)
                 col (if (= first "\n") 0 (+ input.col 1))]
-            (paco.gen-success char-to-match (input.remaining:sub 2) line col))
+            (paco.gen-success first (input.remaining:sub 2) line col))
           (paco.gen-failure (.. "Expecting '" char-to-match "', got '" first "'.") input.remaining input.line input.col))))))
+
+(fn paco.p-char-negative [char-to-match]
+  "Parse any character except the one provided
+  (character as in byte, use str for unicode character)"
+  (fn [input]
+    (if (paco.is-empty input.remaining)
+      (paco.gen-failure "No more input" input.line input.col)
+      (let [first (input.remaining:sub 1 1)]
+        (if (= first char-to-match)
+          (paco.gen-failure (.. "Not expecting '" first "'.") input.remaining input.line input.col)
+          (let [line (if (= first "\n") (+ input.line 1) input.line)
+                col (if (= first "\n") 0 (+ input.col 1))]
+            (paco.gen-success first (input.remaining:sub 2) line col)))))))
 
 (fn paco.p-str [string-to-match]
   "Parse a string"
@@ -69,6 +82,13 @@
     (fn [s] 
       (accumulate [result "" i current (ipairs (paco.flatten s))] (.. result current)))
     (paco.p-chain parsers)))
+
+(fn paco.p-str-until [delimiter]
+  "Consume input into a string until a delimiter parser"
+  (paco.p-map 
+    (fn [s] 
+      (accumulate [result "" i current (ipairs (paco.flatten s))] (.. result current)))
+    (paco.p-many delimiter)))
 
 
 (fn paco.p-and [parser-1 parser-2]
@@ -99,11 +119,23 @@
 
 (fn paco.p-chain [parsers]
   "Combine an arbitrary amount of parsers, succeed if all of them succeed"
-  (paco.reduce paco.p-and parsers))
+  (if (> (length parsers) 1)
+    (paco.reduce paco.p-and parsers)
+    (fn [input]
+      (let [result ((. parsers 1) input)]
+        (if (= result.status paco.status.error)
+          (paco.gen-failure result.result input.remaining input.line input.col)
+          (paco.gen-success [ result.result ] result.remaining result.line result.col))))))
 
 (fn paco.p-choose [parsers]
   "Combine an arbitrary amount of parsers, succeed if one of them succeeds"
-  (paco.reduce paco.p-or parsers))
+  (if (> (length parsers) 1)
+    (paco.reduce paco.p-or parsers)
+    (fn [input]
+      (let [result ((. parsers 1) input)]
+        (if (= result.status paco.status.error)
+          (paco.gen-failure result.result input.remaining input.line input.col)
+          (paco.gen-success [ result.result ] result.remaining result.line result.col))))))
 
 (fn paco.p-map [f parser]
   "Apply function to result of parser"

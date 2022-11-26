@@ -33,6 +33,10 @@
 (t.eq (p.parse (p.p-char "A") "abc") (p.gen-failure "Expecting 'A', got 'a'." "abc" 0 0))
 (t.eq (p.parse (p.p-char "🐨") "🐨test") (p.gen-failure "Expecting '🐨', got '\240'." "🐨test" 0 0)) ; No unicode support
 
+; p-char-negative
+(t.eq (p.parse (p.p-char-negative "a") "abc") (p.gen-failure "Not expecting 'a'." "abc" 0 0))
+(t.eq (p.parse (p.p-char-negative "A") "abc") (p.gen-success "a" "bc" 0 1))
+
 ; p-str
 (t.eq (p.parse (p.p-str "abc") "abcdef") (p.gen-success "abc" "def" 0 3))
 (t.eq (p.parse (p.p-str "🐶") "🐶abcdef") (p.gen-success "🐶" "abcdef" 0 4))
