@@ -28,7 +28,7 @@ test:
 	@fennel \
 		--add-fennel-path "$(PATH_FENNEL)" \
 		--add-package-path "$(PATH_LUA)" \
-		test/eden.fnl
+		test/run-tests.fnl
 
 # Run the uglyprint file
 uglyprint: 
@@ -43,6 +43,13 @@ paco:
 		--add-fennel-path "$(PATH_FENNEL)" \
 		--add-package-path "$(PATH_LUA)" \
 		src/paco.fnl
+
+# Run the eden file
+eden: 
+	@fennel \
+		--add-fennel-path "$(PATH_FENNEL)" \
+		--add-package-path "$(PATH_LUA)" \
+		src/eden.fnl
 
 
 

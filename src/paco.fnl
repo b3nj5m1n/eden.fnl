@@ -56,7 +56,7 @@
       (let [first (input.remaining:sub 1 1)]
         (if (= first char-to-match)
           (let [line (if (= first "\n") (+ input.line 1) input.line)
-                col (+ input.col 1)]
+                col (if (= first "\n") 0 (+ input.col 1))]
             (paco.gen-success char-to-match (input.remaining:sub 2) line col))
           (paco.gen-failure (.. "Expecting '" char-to-match "', got '" first "'.") input.remaining input.line input.col))))))
 
