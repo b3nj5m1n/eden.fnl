@@ -28,6 +28,34 @@
       (digit:upper))
     (p.p-or eden.p-digit (p.p-any ["a" "A" "b" "B" "c" "C" "d" "D" "e" "E" "f" "F"]))))
 
+(def-parser :p-letter
+  (p.p-any
+    ["a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"
+     "A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "Q" "R" "S" "T" "U" "V" "W" "X" "Y" "Z"]))
+
+(def-parser :p-alphanumeric
+  (p.p-or eden.p-letter eden.p-digit))
+
+(def-parser :p-special-symbol
+  (p.p-any
+    ["." "*" "+" "!" "-" "_" "?" "$" "%" "&" "=" "<" ">"]))
+
+; From the spec:
+; Additionally, : # are allowed as constituent characters in symbols other than as the first character.
+(def-parser :p-constituent-character
+  (p.p-any
+    [":" "#"]))
+
+; Relevant because, from the spec:
+; If -, + or . are the first character, the second character (if any) must be non-numeric.
+(def-parser :p-valid-special-symbol-start-char
+  (p.p-any
+    ["-" "+" "."]))
+
+; Valid characters in a symbol/keyword, excluding the first character
+(def-parser :p-valid-symbol-char
+  (p.p-choose [eden.p-alphanumeric eden.p-special-symbol eden.p-constituent-character]))
+
 
 
 (def-parser :p-nil (p.p-map (fn [_] (eden.get-nil)) (p.p-str "nil")))
@@ -54,7 +82,16 @@
        (p.p-str "\\\\")
        (p.p-str "\\\"")])))
 
-; TODO using \c, \a, \z etc to get the correspondig character which seems to be in the spec
+; Tbh I'm not sure if I understand the spec correctly here:
+; Characters are preceded by a backslash: \c, ...
+(def-parser :p-redundant-char
+  (p.p-map
+    (fn [s]
+      (accumulate [result "" i current (ipairs (p.flatten s))] (.. result current)))
+    (p.p-chain
+       [(p.p-discard (p.p-char "\\"))
+        (p.p-char-negative "\\")])))
+
 (def-parser :p-edn-char
   (p.p-map (fn [s]
              (match s
@@ -83,7 +120,7 @@
                                    (eden.get-string result)))
                                (p.p-chain
                                  [(p.p-discard (p.p-char "\""))
-                                  (p.p-str-until (p.p-choose [eden.p-unicode-char eden.p-edn-char eden.p-escape-char (p.p-char-negative "\"")]))
+                                  (p.p-str-until (p.p-choose [eden.p-unicode-char eden.p-edn-char eden.p-escape-char eden.p-redundant-char (p.p-char-negative "\"")]))
                                   (p.p-discard (p.p-char "\""))])))
 
 
@@ -128,6 +165,38 @@
         (p.p-option eden.p-exponent)
         (p.p-option (p.p-char "M"))])))
            
+(def-parser :p-symbol-part
+  (p.p-map
+    (fn [x]
+      (accumulate [result "" i current (ipairs (p.flatten x))] (.. result current)))
+    (p.p-or
+      (p.p-chain
+        [eden.p-letter
+         (p.p-many eden.p-valid-symbol-char)])
+      (p.p-chain
+        [eden.p-valid-special-symbol-start-char
+         (p.p-option 
+           (p.p-chain
+             [eden.p-letter
+              (p.p-option (p.p-many eden.p-valid-symbol-char))]))]))))
+
+; TODO give back type with split prefix/name
+(def-parser :p-symbol
+  (p.p-map
+    (fn [x]
+      (accumulate [result "" i current (ipairs (p.flatten [ x ]))] (.. result current)))
+    (p.p-choose
+      [(p.p-chain
+         [eden.p-symbol-part
+          (p.p-option (p.p-and (p.p-char "/") eden.p-symbol-part))])
+       (p.p-char "/")])))
+
+; TODO give back type with split prefix/name
+(def-parser :p-keyword
+  (p.p-map
+    (fn [x]
+      (accumulate [result "" i current (ipairs (p.flatten [ x ]))] (.. result current)))
+    (p.p-and (p.p-char ":") eden.p-symbol)))
 
 
 

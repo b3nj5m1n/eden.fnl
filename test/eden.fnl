@@ -80,12 +80,38 @@
 (t.eq (p.parse e.p-float "5e-3M") (p.gen-success (e.get-float 0.005) "" 0 5))
 (t.eq (p.parse e.p-float "5.5e-3M") (p.gen-success (e.get-float 0.0055) "" 0 7))
 
+; p-letter
+(t.eq (p.parse e.p-letter "a") (p.gen-success "a" "" 0 1))
+(t.eq (p.parse e.p-letter "A") (p.gen-success "A" "" 0 1))
+; p-alphanumeric
+(t.eq (p.parse e.p-alphanumeric "a") (p.gen-success "a" "" 0 1))
+(t.eq (p.parse e.p-alphanumeric "A") (p.gen-success "A" "" 0 1))
+(t.eq (p.parse e.p-alphanumeric "0") (p.gen-success "0" "" 0 1))
+(t.eq (p.parse e.p-alphanumeric "5") (p.gen-success "5" "" 0 1))
+; p-special-symbol
+(t.eq (p.parse e.p-special-symbol "<") (p.gen-success "<" "" 0 1))
+; p-constituent-character
+(t.eq (p.parse e.p-constituent-character ":") (p.gen-success ":" "" 0 1))
+(t.eq (p.parse e.p-constituent-character "#") (p.gen-success "#" "" 0 1))
+; p-valid-special-symbol-start-char
+(t.eq (p.parse e.p-valid-special-symbol-start-char "-") (p.gen-success "-" "" 0 1))
+(t.eq (p.parse e.p-valid-special-symbol-start-char "+") (p.gen-success "+" "" 0 1))
+(t.eq (p.parse e.p-valid-special-symbol-start-char ".") (p.gen-success "." "" 0 1))
+; p-valid-symbol-char
+(t.eq (p.parse e.p-valid-symbol-char "a") (p.gen-success "a" "" 0 1))
+(t.eq (p.parse e.p-valid-symbol-char "-") (p.gen-success "-" "" 0 1))
+(t.eq (p.parse e.p-valid-symbol-char "*") (p.gen-success "*" "" 0 1))
+(t.eq (p.parse e.p-valid-symbol-char "3") (p.gen-success "3" "" 0 1))
+
 ; p-escape-char
 (t.eq (p.parse e.p-escape-char "\\t") (p.gen-success "\t" "" 0 2))
 (t.eq (p.parse e.p-escape-char "\\r") (p.gen-success "\r" "" 0 2))
 (t.eq (p.parse e.p-escape-char "\\n") (p.gen-success "\n" "" 0 2))
 (t.eq (p.parse e.p-escape-char "\\\\") (p.gen-success "\\" "" 0 2))
 (t.eq (p.parse e.p-escape-char "\\\"") (p.gen-success "\"" "" 0 2))
+; p-redundant-char
+(t.eq (p.parse e.p-redundant-char "\\c") (p.gen-success "c" "" 0 2))
+(t.eq (p.parse e.p-redundant-char "\\z") (p.gen-success "z" "" 0 2))
 ; p-edn-char
 (t.eq (p.parse e.p-edn-char "\\newline") (p.gen-success "\n" "" 0 8))
 (t.eq (p.parse e.p-edn-char "\\return") (p.gen-success "\r" "" 0 7))
@@ -99,4 +125,19 @@
 (t.eq (p.parse e.p-string "\"\\\"test\\\"\"") (p.gen-success (e.get-string "\"test\"") "" 0 10))
 (t.eq (p.parse e.p-string "\"\\newline\"") (p.gen-success (e.get-string "\n") "" 0 10))
 (t.eq (p.parse e.p-string "\"te\\u1f49cst\"") (p.gen-success (e.get-string "te💜st") "" 0 13))
+(t.eq (p.parse e.p-string "\"te\\st\"") (p.gen-success (e.get-string "test") "" 0 7))
 
+; p-symbol-not-start
+(t.eq (p.parse e.p-symbol-part "test") (p.gen-success "test" "" 0 4))
+(t.eq (p.parse e.p-symbol-part "3test") (p.gen-failure "Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Expecting 'a', got '3'., or Expecting 'b', got '3'., or Expecting 'c', got '3'., or Expecting 'd', got '3'., or Expecting 'e', got '3'., or Expecting 'f', got '3'., or Expecting 'g', got '3'., or Expecting 'h', got '3'., or Expecting 'i', got '3'., or Expecting 'j', got '3'., or Expecting 'k', got '3'., or Expecting 'l', got '3'., or Expecting 'm', got '3'., or Expecting 'n', got '3'., or Expecting 'o', got '3'., or Expecting 'p', got '3'., or Expecting 'q', got '3'., or Expecting 'r', got '3'., or Expecting 's', got '3'., or Expecting 't', got '3'., or Expecting 'u', got '3'., or Expecting 'v', got '3'., or Expecting 'w', got '3'., or Expecting 'x', got '3'., or Expecting 'y', got '3'., or Expecting 'z', got '3'., or Expecting 'A', got '3'., or Expecting 'B', got '3'., or Expecting 'C', got '3'., or Expecting 'D', got '3'., or Expecting 'E', got '3'., or Expecting 'F', got '3'., or Expecting 'G', got '3'., or Expecting 'H', got '3'., or Expecting 'I', got '3'., or Expecting 'J', got '3'., or Expecting 'K', got '3'., or Expecting 'L', got '3'., or Expecting 'M', got '3'., or Expecting 'N', got '3'., or Expecting 'O', got '3'., or Expecting 'P', got '3'., or Expecting 'Q', got '3'., or Expecting 'R', got '3'., or Expecting 'S', got '3'., or Expecting 'T', got '3'., or Expecting 'U', got '3'., or Expecting 'V', got '3'., or Expecting 'W', got '3'., or Expecting 'X', got '3'., or Expecting 'Y', got '3'., or Expecting 'Z', got '3'., or Either: Either: Expecting '-', got '3'., or Expecting '+', got '3'., or Expecting '.', got '3'." "3test" 0 0))
+(t.eq (p.parse e.p-symbol-part "t2est") (p.gen-success "t2est" "" 0 5))
+(t.eq (p.parse e.p-symbol-part "t*est") (p.gen-success "t*est" "" 0 5))
+(t.eq (p.parse e.p-symbol-part "+est") (p.gen-success "+est" "" 0 4))
+(t.eq (p.parse e.p-symbol-part "+e*t") (p.gen-success "+e*t" "" 0 4))
+; p-symbol
+(t.eq (p.parse e.p-symbol "test") (p.gen-success "test" "" 0 4))
+(t.eq (p.parse e.p-symbol "test/test") (p.gen-success "test/test" "" 0 9))
+(t.eq (p.parse e.p-symbol "/") (p.gen-success "/" "" 0 1))
+; p-keyword
+(t.eq (p.parse e.p-keyword ":test") (p.gen-success ":test" "" 0 5))
+(t.eq (p.parse e.p-keyword "test") (p.gen-failure "Expecting ':', got 't'." "test" 0 0))

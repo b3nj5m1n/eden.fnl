@@ -96,7 +96,7 @@
   (fn [input]
     (let [result-1 (parser-1 input)]
       (if (= result-1.status paco.status.error)
-        result-1
+        (paco.gen-failure result-1.result input.remaining input.line input.col)
         (let [result-2 (parser-2 result-1)]
           (if (= result-2.status paco.status.error)
             (paco.gen-failure result-2.result input.remaining input.line input.col)
