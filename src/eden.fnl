@@ -11,6 +11,7 @@
 (def-type :nil)
 (def-type :bool)
 (def-type :string)
+(def-type :char)
 (def-type :integer)
 (def-type :float)
 
@@ -93,12 +94,9 @@
 ; Tbh I'm not sure if I understand the spec correctly here:
 ; Characters are preceded by a backslash: \c, ...
 (def-parser :p-redundant-char
-  (p.p-map
-    (fn [s]
-      (accumulate [result "" i current (ipairs (p.flatten s))] (.. result current)))
-    (p.p-chain
-       [(p.p-discard (p.p-char "\\"))
-        (p.p-char-negative "\\")])))
+  (p.p-chain
+     [(p.p-discard (p.p-char "\\"))
+      (p.p-char-negative "\\")]))
 
 (def-parser :p-edn-char
   (p.p-map (fn [s]
@@ -123,14 +121,24 @@
         (utf8.char (tonumber code-point 16))))
     (p.p-and (p.p-discard (p.p-str "\\u")) (p.p-many1 eden.p-hex-digit))))
 
+(def-parser :p-char-all
+  (p.p-choose [eden.p-unicode-char eden.p-edn-char eden.p-escape-char eden.p-redundant-char]))
+
+(def-parser :p-char
+  (p.p-map
+    (fn [x]
+      (eden.get-char x))
+    eden.p-char-all))
+
 (def-parser :p-string (p.p-map (fn [s]
-                                 (let [result (accumulate [result "" i current (ipairs (p.flatten s))] (.. result current))]
-                                   (eden.get-string result)))
+                                 (eden.get-string s))
                                (p.p-chain
                                  [(p.p-discard (p.p-char "\""))
-                                  (p.p-str-until (p.p-choose [eden.p-unicode-char eden.p-edn-char eden.p-escape-char eden.p-redundant-char (p.p-char-negative "\"")]))
+                                  (p.p-str-until (p.p-choose
+                                                   ; [(p.p-map (fn [x] x.value) eden.p-char)
+                                                   [eden.p-char-all
+                                                    (p.p-char-negative "\"")]))
                                   (p.p-discard (p.p-char "\""))])))
-
 
 (def-parser :p-integer
    (p.p-map
@@ -164,8 +172,8 @@
      (fn [digits]
        (local num-as-str (accumulate [result "" i current (ipairs (p.flatten digits))] (.. result current)))
        (if (= "M" (num-as-str:sub -1))
-         (eden.get-float (tonumber (+ 0.0 (num-as-str:sub 1 (- (length num-as-str) 1)))))
-         (eden.get-float (tonumber (+ 0.0 num-as-str)))))
+         (eden.get-float (+ 0.0 (tonumber (num-as-str:sub 1 (- (length num-as-str) 1)))))
+         (eden.get-float (+ 0.0 (tonumber num-as-str)))))
      (p.p-chain
        [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
         (p.p-many eden.p-digit)
@@ -204,8 +212,34 @@
 (def-parser :p-keyword
   (p.p-map
     (fn [x]
-      (eden.symbol-to-keyword (. x 2)))
+      (eden.symbol-to-keyword x))
     (p.p-and (p.p-discard (p.p-char ":")) eden.p-symbol)))
+
+(def-parser :p-edn-type
+  (p.p-map
+    (fn [x]
+      x)
+    (p.p-choose
+     [eden.p-nil
+      eden.p-bool
+      eden.p-string
+      eden.p-char
+      eden.p-symbol
+      eden.p-keyword
+      eden.p-integer
+      eden.p-float])))
+
+(def-parser :p-list
+  (p.p-map
+    (fn [x]
+      (up.pp x)
+      (print (type x))
+      x)
+    (p.p-chain
+      [(p.p-discard (p.p-char "("))
+       (p.p-many (p.p-and eden.p-edn-type eden.p-whitespace))
+       (p.p-option eden.p-edn-type)
+       (p.p-discard (p.p-char ")"))])))
 
 
 

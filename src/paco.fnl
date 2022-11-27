@@ -4,10 +4,15 @@
 
 (var paco {})
 
-(fn paco.is-empty [s]
-  "Check if the string is literally empty, whitespace doesn't count as empty
-  since you might want to do something with that"
-  (or (= s nil) (= s "")))
+(fn paco.is-empty [x]
+  "Check if the variable is empty.
+  (in case of string, check if string is literally empty, whitespace doesn't
+  count as empty since you might want to do something with that)"
+  (match (type x)
+    "string" (or (= x nil) (= x ""))
+    "table" (not (next x))
+    "nil" true
+    _ false))
 
 (fn paco.reduce [reduce-func list]
   "Apply function to every pair of elements in the list, taking the result as
@@ -37,6 +42,13 @@
                  (fn [c]
                    (tset fields (+ (length fields) 1) c)))
     fields))
+
+(fn paco.combine-results [result-1 result-2]
+  "Split string by delimiter"
+  (match [ result-1.result result-2.result]
+    (where [x y] (and (not (paco.is-empty x))) (not (paco.is-empty y))) [x y]
+    (where [x y] (and (not (not (paco.is-empty x)))) (not (paco.is-empty y))) y
+    (where [x y] (and (not (paco.is-empty x))) (not (not (paco.is-empty y)))) x))
 
 
 (set paco.status {:ok 1 :error 0})
@@ -110,7 +122,7 @@
         (let [result-2 (parser-2 result-1)]
           (if (= result-2.status paco.status.error)
             (paco.gen-failure result-2.result input.remaining input.line input.col)
-            (paco.gen-success [ result-1.result result-2.result ] result-2.remaining result-2.line result-2.col)))))))
+            (paco.gen-success (paco.combine-results result-1 result-2) result-2.remaining result-2.line result-2.col)))))))
 
 (fn paco.p-or [parser-1 parser-2]
   "Combine two parsers, succeed if one of them succeeds"
@@ -135,7 +147,7 @@
       (let [result ((. parsers 1) input)]
         (if (= result.status paco.status.error)
           (paco.gen-failure result.result input.remaining input.line input.col)
-          (paco.gen-success [ result.result ] result.remaining result.line result.col))))))
+          (paco.gen-success result.result result.remaining result.line result.col))))))
 
 (fn paco.p-choose [parsers]
   "Combine an arbitrary amount of parsers, succeed if one of them succeeds"
@@ -145,7 +157,7 @@
       (let [result ((. parsers 1) input)]
         (if (= result.status paco.status.error)
           (paco.gen-failure result.result input.remaining input.line input.col)
-          (paco.gen-success [ result.result ] result.remaining result.line result.col))))))
+          (paco.gen-success result.result result.remaining result.line result.col))))))
 
 (fn paco.p-map [f parser]
   "Apply function to result of parser"
@@ -169,7 +181,7 @@
       (if (= result.status paco.status.error)
         (paco.gen-success "" input.remaining input.line input.col)
         (let [more ((paco.p-zero-or-more parser) result)]
-          (paco.gen-success [ result.result more.result ] more.remaining more.line more.col))))))
+          (paco.gen-success (paco.combine-results result more) more.remaining more.line more.col))))))
 
 (fn paco.p-many [parser]
   "Match parser zero or an arbitrary number of times (alias)"
@@ -183,7 +195,7 @@
     (if (= first-result.status paco.status.error)
       first-result
       (let [more ((paco.p-zero-or-more parser) first-result)]
-        (paco.gen-success [ first-result.result more.result ] more.remaining more.line more.col)))))
+        (paco.gen-success (paco.combine-results first-result more) more.remaining more.line more.col)))))
 
 (fn paco.p-option [parser]
   "Match parser zero or one time"
@@ -199,7 +211,7 @@
     (let [result (parser input)]
       (if (= result.status paco.status.error)
         result
-        (paco.gen-success "" result.remaining result.line result.col)))))
+        (paco.gen-success [] result.remaining result.line result.col)))))
 
 (fn paco.parse [parser input]
   "Apply parser"

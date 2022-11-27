@@ -75,8 +75,8 @@
 (t.eq (p.parse (p.p-any ["a" "b" "c"]) "abcdef") (p.gen-success "a" "bcdef" 0 1))
 
 ; p-zero-or-more
-(t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "abcdef") (p.gen-success [ "a" "" ] "bcdef" 0 1))
-(t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" [ "a" [ "a" [ "a" [ "a" "" ] ] ] ] ] "bcdef" 0 5))
+(t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "abcdef") (p.gen-success "a" "bcdef" 0 1))
+(t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" [ "a" [ "a" [ "a" "a" ] ] ] ] "bcdef" 0 5))
 (t.eq (p.parse (p.p-zero-or-more (p.p-char "a")) "bcdef") (p.gen-success "" "bcdef" 0 0))
 
 ; p-many
@@ -85,8 +85,8 @@
 (t.eq (p.parse (p.p-many (p.p-char "a")) "bcdef") (p.parse (p.p-zero-or-more (p.p-char "a")) "bcdef"))
 
 ; p-many1
-(t.eq (p.parse (p.p-many1 (p.p-char "a")) "abcdef") (p.gen-success [ "a" "" ] "bcdef" 0 1))
-(t.eq (p.parse (p.p-many1 (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" [ "a" [ "a" [ "a" [ "a" "" ] ] ] ] ] "bcdef" 0 5))
+(t.eq (p.parse (p.p-many1 (p.p-char "a")) "abcdef") (p.gen-success "a" "bcdef" 0 1))
+(t.eq (p.parse (p.p-many1 (p.p-char "a")) "aaaaabcdef") (p.gen-success [ "a" [ "a" [ "a" [ "a" "a" ] ] ] ] "bcdef" 0 5))
 (t.eq (p.parse (p.p-many1 (p.p-char "a")) "bcdef") (p.gen-failure "Expecting 'a', got 'b'." "bcdef" 0 0))
 
 ; p-option
@@ -94,4 +94,4 @@
 (t.eq (p.parse (p.p-option (p.p-char "a")) "bcdef") (p.gen-success "" "bcdef" 0 0))
 
 ; p-option
-(t.eq (p.parse (p.p-discard (p.p-char "a")) "abcdef") (p.gen-success "" "bcdef" 0 1))
+(t.eq (p.parse (p.p-discard (p.p-char "a")) "abcdef") (p.gen-success {} "bcdef" 0 1))
