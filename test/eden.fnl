@@ -14,6 +14,15 @@
 (t.eq (e.get-string "🐲") { :type "string" :value "🐲"})
 (t.eq (e.get-integer 5) { :type "integer" :value 5})
 (t.eq (e.get-float 5.5) { :type "float" :value 5.5})
+(t.eq (e.get-symbol nil nil) { :type "symbol" :prefix nil :name nil})
+(t.eq (e.get-symbol nil "test") { :type "symbol" :prefix nil :name "test"})
+(t.eq (e.get-symbol "test1" "test2") { :type "symbol" :prefix "test1" :name "test2"})
+(t.eq (e.get-keyword nil nil) { :type "keyword" :prefix nil :name nil})
+(t.eq (e.get-keyword nil "test") { :type "keyword" :prefix nil :name "test"})
+(t.eq (e.get-keyword "test1" "test2") { :type "keyword" :prefix "test1" :name "test2"})
+(t.eq (e.symbol-to-keyword (e.get-symbol nil nil)) (e.get-keyword nil nil))
+(t.eq (e.symbol-to-keyword (e.get-symbol nil "test")) (e.get-keyword nil "test"))
+(t.eq (e.symbol-to-keyword (e.get-symbol "test1" "test2")) (e.get-keyword "test1" "test2"))
 
 ; p-whitespace
 (t.eq (p.parse e.p-whitespace "") (p.gen-failure "Either: Either: Either: No more input, or No more input, or No more input, or No more input" "" 0 0))
@@ -135,9 +144,10 @@
 (t.eq (p.parse e.p-symbol-part "+est") (p.gen-success "+est" "" 0 4))
 (t.eq (p.parse e.p-symbol-part "+e*t") (p.gen-success "+e*t" "" 0 4))
 ; p-symbol
-(t.eq (p.parse e.p-symbol "test") (p.gen-success "test" "" 0 4))
-(t.eq (p.parse e.p-symbol "test/test") (p.gen-success "test/test" "" 0 9))
-(t.eq (p.parse e.p-symbol "/") (p.gen-success "/" "" 0 1))
+(t.eq (p.parse e.p-symbol "test") (p.gen-success (e.get-symbol nil "test") "" 0 4))
+(t.eq (p.parse e.p-symbol "test1/test2") (p.gen-success (e.get-symbol "test1" "test2") "" 0 11))
+(t.eq (p.parse e.p-symbol "/") (p.gen-success (e.get-symbol nil nil) "" 0 1))
 ; p-keyword
-(t.eq (p.parse e.p-keyword ":test") (p.gen-success ":test" "" 0 5))
+(t.eq (p.parse e.p-keyword ":test") (p.gen-success (e.get-keyword nil "test") "" 0 5))
 (t.eq (p.parse e.p-keyword "test") (p.gen-failure "Expecting ':', got 't'." "test" 0 0))
+(t.eq (p.parse e.p-keyword ":test1/test2") (p.gen-success (e.get-keyword "test1" "test2") "" 0 12))

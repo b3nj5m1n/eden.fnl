@@ -27,6 +27,16 @@
         (table.insert flattened element)))
   flattened)
 
+; https://stackoverflow.com/a/40180465/11110290
+(fn paco.split [s sep]
+  "Split string by delimiter"
+  (let [fields {}
+        sep (or sep " ")
+        pattern (string.format "([^%s]+)" sep)]
+    (string.gsub s pattern
+                 (fn [c]
+                   (tset fields (+ (length fields) 1) c)))
+    fields))
 
 
 (set paco.status {:ok 1 :error 0})

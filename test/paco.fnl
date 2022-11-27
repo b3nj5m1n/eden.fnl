@@ -21,6 +21,9 @@
 (t.eq (p.flatten [1 [2 [3] 4] 5]) [1 2 3 4 5])
 (t.eq (p.flatten [1 2 3]) [1 2 3])
 
+; split
+(t.eq (p.split "test1/test2" "/") ["test1" "test2"])
+
 ; gen-success
 (t.eq (p.gen-success "" "test" 15 2) { :status p.status.ok :result "" :remaining "test" :line 15 :col 2})
 (t.eq (p.gen-success [1 2 3] "test" 15 2) { :status p.status.ok :result [1 2 3] :remaining "test" :line 15 :col 2})

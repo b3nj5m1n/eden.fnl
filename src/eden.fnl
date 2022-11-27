@@ -6,13 +6,21 @@
 (fn def-type [name]
   (tset eden (.. "get-" name)
         (fn [value]
-          { :type name :value value})))
+          {:type name :value value})))
 
 (def-type :nil)
 (def-type :bool)
 (def-type :string)
 (def-type :integer)
 (def-type :float)
+
+(fn eden.get-symbol [prefix name]
+  {:type "symbol" :prefix prefix :name name})
+(fn eden.get-keyword [prefix name]
+  {:type "keyword" :prefix prefix :name name})
+(fn eden.symbol-to-keyword [symbol]
+  (tset symbol :type "keyword")
+  symbol)
 
 (fn def-parser [name parser]
   (tset eden name parser))
@@ -180,23 +188,24 @@
              [eden.p-letter
               (p.p-option (p.p-many eden.p-valid-symbol-char))]))]))))
 
-; TODO give back type with split prefix/name
 (def-parser :p-symbol
   (p.p-map
     (fn [x]
-      (accumulate [result "" i current (ipairs (p.flatten [ x ]))] (.. result current)))
+      (match (accumulate [result "" i current (ipairs (p.flatten [ x ]))] (.. result current))
+        "/" (eden.get-symbol nil nil)
+        (where s (not (s:find "/"))) (eden.get-symbol nil s)
+        s (eden.get-symbol (table.unpack (p.split s "/")))))
     (p.p-choose
       [(p.p-chain
          [eden.p-symbol-part
           (p.p-option (p.p-and (p.p-char "/") eden.p-symbol-part))])
        (p.p-char "/")])))
 
-; TODO give back type with split prefix/name
 (def-parser :p-keyword
   (p.p-map
     (fn [x]
-      (accumulate [result "" i current (ipairs (p.flatten [ x ]))] (.. result current)))
-    (p.p-and (p.p-char ":") eden.p-symbol)))
+      (eden.symbol-to-keyword (. x 2)))
+    (p.p-and (p.p-discard (p.p-char ":")) eden.p-symbol)))
 
 
 
