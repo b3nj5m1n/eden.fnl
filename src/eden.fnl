@@ -14,6 +14,7 @@
 (def-type :char)
 (def-type :integer)
 (def-type :float)
+(def-type :list)
 
 (fn eden.get-symbol [prefix name]
   {:type "symbol" :prefix prefix :name name})
@@ -141,12 +142,13 @@
                                   (p.p-discard (p.p-char "\""))])))
 
 (def-parser :p-integer
-   (p.p-map
-     (fn [digits]
-       (local num-as-str (accumulate [result "" i current (ipairs (p.flatten digits))] (.. result current)))
-       (if (= "N" (num-as-str:sub -1))
-         (eden.get-integer (tonumber (num-as-str:sub 1 (- (length num-as-str) 1))))
-         (eden.get-integer (tonumber num-as-str))))
+   (p.p-map-fallible
+     (fn [digits info-result info-input]
+       (local num-as-str (p.result-to-str digits))
+       (let [num (if (= "N" (num-as-str:sub -1)) (num-as-str:sub 1 (- (length num-as-str) 1)) num-as-str)]
+         (if (= nil (tonumber num))
+           (p.gen-failure "Failed parsing to int" info-input.remaining info-input.line info-input.col)
+           (p.gen-success (eden.get-integer (tonumber num)) info-result.remaining info-result.line info-result.col))))
      (p.p-chain
        [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
         eden.p-digit-non-zero
@@ -168,12 +170,13 @@
         (p.p-many eden.p-digit)])))
 
 (def-parser :p-float
-   (p.p-map
-     (fn [digits]
+   (p.p-map-fallible
+     (fn [digits info-result info-input]
        (local num-as-str (accumulate [result "" i current (ipairs (p.flatten digits))] (.. result current)))
-       (if (= "M" (num-as-str:sub -1))
-         (eden.get-float (+ 0.0 (tonumber (num-as-str:sub 1 (- (length num-as-str) 1)))))
-         (eden.get-float (+ 0.0 (tonumber num-as-str)))))
+       (let [num (if (= "M" (num-as-str:sub -1)) (num-as-str:sub 1 (- (length num-as-str) 1)) num-as-str)]
+         (if (= nil (tonumber num))
+           (p.gen-failure "Failed parsing to float" info-input.remaining info-input.line info-input.col)
+           (p.gen-success (eden.get-float (+ 0.0 (tonumber num))) info-result.remaining info-result.line info-result.col))))
      (p.p-chain
        [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
         (p.p-many eden.p-digit)
@@ -216,31 +219,45 @@
     (p.p-and (p.p-discard (p.p-char ":")) eden.p-symbol)))
 
 (def-parser :p-edn-type
-  (p.p-map
-    (fn [x]
-      x)
-    (p.p-choose
-     [eden.p-nil
-      eden.p-bool
-      eden.p-string
-      eden.p-char
-      eden.p-symbol
-      eden.p-keyword
-      eden.p-integer
-      eden.p-float])))
+  ; (p.p-map
+  ;   (fn [x]
+  ;     (up.pp x)
+  ;     x)
+  (p.p-choose
+   [; eden.p-list
+    eden.p-nil
+    eden.p-string
+    eden.p-float
+    eden.p-integer
+    eden.p-bool
+    eden.p-keyword
+    eden.p-symbol
+    eden.p-char
+    eden.p-list]))
 
 (def-parser :p-list
   (p.p-map
     (fn [x]
-      (up.pp x)
-      (print (type x))
-      x)
+      (eden.get-list x))
     (p.p-chain
       [(p.p-discard (p.p-char "("))
-       (p.p-many (p.p-and eden.p-edn-type eden.p-whitespace))
        (p.p-option eden.p-edn-type)
+       (p.p-many (p.p-and eden.p-whitespace eden.p-edn-type))
        (p.p-discard (p.p-char ")"))])))
 
+; (local t1 (p.parse eden.p-char "\\a"))
+; (local t2 (p.parse eden.p-char "\\b"))
+; (local t3 (p.combine-results t1 t2))
+; (local t4 (p.parse eden.p-char "\\c"))
+; (local t5 (p.combine-results t3 t4))
+; (up.pp (p.parse (p.p-and eden.p-edn-type eden.p-edn-type) "\\a\\b\\c "))
+; (up.pp (p.parse (p.p-many (p.p-choose [ eden.p-nil eden.p-char ])) "nil\\n"))
+; (up.pp (p.parse (p.p-many eden.p-float) "1.1"))
+; (up.pp (p.parse (p.p-many eden.p-edn-type) "nil\\a\\b\\c "))
+; (up.pp t1)
+; (print "\n")
+; (up.pp (p.table-prepend [t1 t2] t4))
+; (up.pp (p.table-prepend [1 2] 3))
 
 
 eden

@@ -32,6 +32,11 @@
         (table.insert flattened element)))
   flattened)
 
+(fn paco.result-to-str [result]
+  (if (= :string (type result))
+    result
+    (accumulate [end-result "" i current (ipairs result)] (.. end-result current))))
+
 ; https://stackoverflow.com/a/40180465/11110290
 (fn paco.split [s sep]
   "Split string by delimiter"
@@ -43,13 +48,41 @@
                    (tset fields (+ (length fields) 1) c)))
     fields))
 
+(fn paco.table-append [t new-element]
+  (let [t2 {}]
+    (each [_ v (ipairs t)]
+      (table.insert t2 v))
+    (table.insert t2 new-element)
+    t2))
+(fn paco.table-prepend [t new-element]
+  (let [t2 {}]
+    (table.insert t2 new-element)
+    (each [_ v (ipairs t)]
+      (table.insert t2 v))
+    t2))
+
 (fn paco.combine-results [result-1 result-2]
   "Split string by delimiter"
-  (match [ result-1.result result-2.result]
-    (where [x y] (and (not (paco.is-empty x))) (not (paco.is-empty y))) [x y]
-    (where [x y] (and (not (not (paco.is-empty x)))) (not (paco.is-empty y))) y
-    (where [x y] (and (not (paco.is-empty x))) (not (not (paco.is-empty y)))) x))
-
+  (local x (if (not= nil (. result-1 :result)) result-1.result result-1))
+  (local y (if (not= nil (. result-2 :result)) result-2.result result-2))
+  ; (up.pp x)
+  ; (up.pp y)
+  (match [x y]
+    (where [x y] (and (not (paco.is-empty x)) (not (paco.is-empty y))))
+    (do
+      (if
+        (and (= :table (type x)) (= nil (. x :type)))
+        (do
+          (paco.table-append x y))
+        (and (= :table (type y)) (= nil (. y :type)))
+        (do
+          (paco.table-prepend y x))
+        (do
+          [x y])))
+    (where [x y] (and (not (not (paco.is-empty x)))) (not (paco.is-empty y)))
+    y
+    (where [x y] (and (not (paco.is-empty x))) (not (not (paco.is-empty y))))
+    x))
 
 (set paco.status {:ok 1 :error 0})
 
@@ -167,6 +200,13 @@
         (paco.gen-success (f result.result) result.remaining result.line result.col)
         result))))
 
+(fn paco.p-map-fallible [f parser]
+  (fn [input]
+    (let [result (parser input)]
+      (if (= result.status paco.status.ok)
+        (f result.result result input)
+        result))))
+
 (fn paco.p-any [chars]
   "Match any of the passed characters"
   (var parsers [])
@@ -253,5 +293,9 @@
 ; (up.pp (paco.parse (paco.p-str "moin") "mojnsen"))
 ; (up.pp (paco.parse (paco.p-and p-whitespace p-digit) "   1ojnsen"))
 ; (up.pp (paco.parse (paco.p-zero-or-more (paco.p-str "moin")) "moinmoinsen"))
+
+; (up.pp (paco.table-append [1 2 3] 4))
+; (up.pp (paco.is-empty (paco.gen-success "a" 0 0)))
+; (up.pp (paco.combine-results (paco.gen-success "a" 0 0) (paco.gen-success "b" 0 0)))
 
 paco
