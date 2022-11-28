@@ -38,16 +38,16 @@
 (t.eq (p.parse e.p-whitespace-optional " ,,abc") (p.gen-success {} "abc" 0 3))
 
 ; p-nil
-(t.eq (p.parse e.p-nil "nil") (p.gen-success (e.get-nil) "" 0 3))
-(t.eq (p.parse e.p-nil "il") (p.gen-failure "Expecting 'n', got 'i'." "il" 0 0))
+(t.eq (p.parse ( e.p-nil ) "nil") (p.gen-success (e.get-nil) "" 0 3))
+(t.eq (p.parse ( e.p-nil ) "il") (p.gen-failure "Expecting 'n', got 'i'." "il" 0 0))
 
 ; p-bool
-(t.eq (p.parse e.p-bool "true") (p.gen-success (e.get-bool true) "" 0 4))
-(t.eq (p.parse e.p-bool "false") (p.gen-success (e.get-bool false) "" 0 5))
+(t.eq (p.parse ( e.p-bool ) "true") (p.gen-success (e.get-bool true) "" 0 4))
+(t.eq (p.parse ( e.p-bool ) "false") (p.gen-success (e.get-bool false) "" 0 5))
 
 ; p-string
-(t.eq (p.parse e.p-string "\"test\"") (p.gen-success (e.get-string "test") "" 0 6))
-(t.eq (p.parse e.p-string "\"test\"abc") (p.gen-success (e.get-string "test") "abc" 0 6))
+(t.eq (p.parse ( e.p-string ) "\"test\"") (p.gen-success (e.get-string "test") "" 0 6))
+(t.eq (p.parse ( e.p-string ) "\"test\"abc") (p.gen-success (e.get-string "test") "abc" 0 6))
 
 ; p-digit-non-zero
 (t.eq (p.parse e.p-digit-non-zero "0") (p.gen-failure "Either: Either: Either: Either: Either: Either: Either: Either: Expecting '1', got '0'., or Expecting '2', got '0'., or Expecting '3', got '0'., or Expecting '4', got '0'., or Expecting '5', got '0'., or Expecting '6', got '0'., or Expecting '7', got '0'., or Expecting '8', got '0'., or Expecting '9', got '0'." "0" 0 0))
@@ -68,12 +68,12 @@
 (t.eq (p.parse e.p-hex-digit "F") (p.gen-success "F" "" 0 1))
 (t.eq (p.parse e.p-hex-digit "G") (p.gen-failure "Either: Either: Expecting '0', got 'G'., or Either: Either: Either: Either: Either: Either: Either: Either: Expecting '1', got 'G'., or Expecting '2', got 'G'., or Expecting '3', got 'G'., or Expecting '4', got 'G'., or Expecting '5', got 'G'., or Expecting '6', got 'G'., or Expecting '7', got 'G'., or Expecting '8', got 'G'., or Expecting '9', got 'G'., or Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Either: Expecting 'a', got 'G'., or Expecting 'A', got 'G'., or Expecting 'b', got 'G'., or Expecting 'B', got 'G'., or Expecting 'c', got 'G'., or Expecting 'C', got 'G'., or Expecting 'd', got 'G'., or Expecting 'D', got 'G'., or Expecting 'e', got 'G'., or Expecting 'E', got 'G'., or Expecting 'f', got 'G'., or Expecting 'F', got 'G'." "G" 0 0))
 ; p-integer
-(t.eq (p.parse e.p-integer "1") (p.gen-success (e.get-integer 1) "" 0 1))
-(t.eq (p.parse e.p-integer "69") (p.gen-success (e.get-integer 69) "" 0 2))
-(t.eq (p.parse e.p-integer "+69") (p.gen-success (e.get-integer 69) "" 0 3))
-(t.eq (p.parse e.p-integer "-69") (p.gen-success (e.get-integer -69) "" 0 3))
-(t.eq (p.parse e.p-integer "69N") (p.gen-success (e.get-integer 69) "" 0 3))
-(t.eq (p.parse e.p-integer "069") (p.gen-failure "Either: Either: Either: Either: Either: Either: Either: Either: Expecting '1', got '0'., or Expecting '2', got '0'., or Expecting '3', got '0'., or Expecting '4', got '0'., or Expecting '5', got '0'., or Expecting '6', got '0'., or Expecting '7', got '0'., or Expecting '8', got '0'., or Expecting '9', got '0'." "069" 0 0))
+(t.eq (p.parse ( e.p-integer ) "1") (p.gen-success (e.get-integer 1) "" 0 1))
+(t.eq (p.parse ( e.p-integer ) "69") (p.gen-success (e.get-integer 69) "" 0 2))
+(t.eq (p.parse ( e.p-integer ) "+69") (p.gen-success (e.get-integer 69) "" 0 3))
+(t.eq (p.parse ( e.p-integer ) "-69") (p.gen-success (e.get-integer -69) "" 0 3))
+(t.eq (p.parse ( e.p-integer ) "69N") (p.gen-success (e.get-integer 69) "" 0 3))
+(t.eq (p.parse ( e.p-integer ) "069") (p.gen-failure "Either: Either: Either: Either: Either: Either: Either: Either: Expecting '1', got '0'., or Expecting '2', got '0'., or Expecting '3', got '0'., or Expecting '4', got '0'., or Expecting '5', got '0'., or Expecting '6', got '0'., or Expecting '7', got '0'., or Expecting '8', got '0'., or Expecting '9', got '0'." "069" 0 0))
 ; p-exponent
 (t.eq (p.parse e.p-exponent "e50 ") (p.gen-success "e50" " " 0 3))
 (t.eq (p.parse e.p-exponent "e+50 ") (p.gen-success "e+50" " " 0 4))
@@ -82,13 +82,13 @@
 (t.eq (p.parse e.p-exponent "E+50 ") (p.gen-success "E+50" " " 0 4))
 (t.eq (p.parse e.p-exponent "E-50 ") (p.gen-success "E-50" " " 0 4))
 ; p-float
-(t.eq (p.parse e.p-float "5M") (p.gen-success (e.get-float 5.0) "" 0 2))
-(t.eq (p.parse e.p-float "5.5") (p.gen-success (e.get-float 5.5) "" 0 3))
-(t.eq (p.parse e.p-float "5e-3") (p.gen-success (e.get-float 0.005) "" 0 4))
-(t.eq (p.parse e.p-float "5.5e-3") (p.gen-success (e.get-float 0.0055) "" 0 6))
-(t.eq (p.parse e.p-float "5.5M") (p.gen-success (e.get-float 5.5) "" 0 4))
-(t.eq (p.parse e.p-float "5e-3M") (p.gen-success (e.get-float 0.005) "" 0 5))
-(t.eq (p.parse e.p-float "5.5e-3M") (p.gen-success (e.get-float 0.0055) "" 0 7))
+(t.eq (p.parse ( e.p-float ) "5M") (p.gen-success (e.get-float 5.0) "" 0 2))
+(t.eq (p.parse ( e.p-float ) "5.5") (p.gen-success (e.get-float 5.5) "" 0 3))
+(t.eq (p.parse ( e.p-float ) "5e-3") (p.gen-success (e.get-float 0.005) "" 0 4))
+(t.eq (p.parse ( e.p-float ) "5.5e-3") (p.gen-success (e.get-float 0.0055) "" 0 6))
+(t.eq (p.parse ( e.p-float ) "5.5M") (p.gen-success (e.get-float 5.5) "" 0 4))
+(t.eq (p.parse ( e.p-float ) "5e-3M") (p.gen-success (e.get-float 0.005) "" 0 5))
+(t.eq (p.parse ( e.p-float ) "5.5e-3M") (p.gen-success (e.get-float 0.0055) "" 0 7))
 
 ; p-letter
 (t.eq (p.parse e.p-letter "a") (p.gen-success "a" "" 0 1))
@@ -130,14 +130,14 @@
 ; p-unicode-char
 (t.eq (p.parse e.p-unicode-char "\\u1f49c") (p.gen-success "💜" "" 0 7))
 ; p-char
-(t.eq (p.parse e.p-char "\\u1f49c") (p.gen-success (e.get-char "💜") "" 0 7))
+(t.eq (p.parse ( e.p-char ) "\\u1f49c") (p.gen-success (e.get-char "💜") "" 0 7))
 ; p-string
-(t.eq (p.parse e.p-string "test") (p.gen-failure "Expecting '\"', got 't'." "test" 0 0))
-(t.eq (p.parse e.p-string "\"test\"") (p.gen-success (e.get-string "test") "" 0 6))
-(t.eq (p.parse e.p-string "\"\\\"test\\\"\"") (p.gen-success (e.get-string "\"test\"") "" 0 10))
+(t.eq (p.parse ( e.p-string ) "test") (p.gen-failure "Expecting '\"', got 't'." "test" 0 0))
+(t.eq (p.parse ( e.p-string ) "\"test\"") (p.gen-success (e.get-string "test") "" 0 6))
+(t.eq (p.parse ( e.p-string ) "\"\\\"test\\\"\"") (p.gen-success (e.get-string "\"test\"") "" 0 10))
 ; (t.eq (p.parse e.p-string "\"\\newline\"") (p.gen-success (e.get-string "\n") "" 0 10))
-(t.eq (p.parse e.p-string "\"te\\u1f49cst\"") (p.gen-success (e.get-string "te💜st") "" 0 13))
-(t.eq (p.parse e.p-string "\"te\\st\"") (p.gen-success (e.get-string "test") "" 0 7))
+(t.eq (p.parse ( e.p-string ) "\"te\\u1f49cst\"") (p.gen-success (e.get-string "te💜st") "" 0 13))
+(t.eq (p.parse ( e.p-string ) "\"te\\st\"") (p.gen-success (e.get-string "test") "" 0 7))
 
 ; p-symbol-not-start
 (t.eq (p.parse e.p-symbol-part "test") (p.gen-success "test" "" 0 4))
@@ -147,29 +147,38 @@
 (t.eq (p.parse e.p-symbol-part "+est") (p.gen-success "+est" "" 0 4))
 (t.eq (p.parse e.p-symbol-part "+e*t") (p.gen-success "+e*t" "" 0 4))
 ; p-symbol
-(t.eq (p.parse e.p-symbol "test") (p.gen-success (e.get-symbol nil "test") "" 0 4))
-(t.eq (p.parse e.p-symbol "test1/test2") (p.gen-success (e.get-symbol "test1" "test2") "" 0 11))
-(t.eq (p.parse e.p-symbol "/") (p.gen-success (e.get-symbol nil nil) "" 0 1))
+(t.eq (p.parse ( e.p-symbol ) "test") (p.gen-success (e.get-symbol nil "test") "" 0 4))
+(t.eq (p.parse ( e.p-symbol ) "test1/test2") (p.gen-success (e.get-symbol "test1" "test2") "" 0 11))
+(t.eq (p.parse ( e.p-symbol ) "/") (p.gen-success (e.get-symbol nil nil) "" 0 1))
 ; p-keyword
-(t.eq (p.parse e.p-keyword ":test") (p.gen-success (e.get-keyword nil "test") "" 0 5))
-(t.eq (p.parse e.p-keyword "test") (p.gen-failure "Expecting ':', got 't'." "test" 0 0))
-(t.eq (p.parse e.p-keyword ":test1/test2") (p.gen-success (e.get-keyword "test1" "test2") "" 0 12))
+(t.eq (p.parse ( e.p-keyword ) ":test") (p.gen-success (e.get-keyword nil "test") "" 0 5))
+(t.eq (p.parse ( e.p-keyword ) "test") (p.gen-failure "Expecting ':', got 't'." "test" 0 0))
+(t.eq (p.parse ( e.p-keyword ) ":test1/test2") (p.gen-success (e.get-keyword "test1" "test2") "" 0 12))
 
 ; p-edn-type
-(t.eq (p.parse e.p-edn-type "nil") (p.gen-success (e.get-nil) "" 0 3))
-(t.eq (p.parse e.p-edn-type "true") (p.gen-success (e.get-bool true) "" 0 4))
-(t.eq (p.parse e.p-edn-type "\"test\"") (p.gen-success (e.get-string "test") "" 0 6))
+(t.eq (p.parse ( e.p-edn-type ) "nil") (p.gen-success (e.get-nil) "" 0 3))
+(t.eq (p.parse ( e.p-edn-type ) "true") (p.gen-success (e.get-bool true) "" 0 4))
+(t.eq (p.parse ( e.p-edn-type ) "\"test\"") (p.gen-success (e.get-string "test") "" 0 6))
 ; (t.eq (p.parse e.p-edn-type "69N") (p.gen-success (e.get-integer 69) "" 0 3))
-(t.eq (p.parse e.p-edn-type "5.5e-3M") (p.gen-success (e.get-float 0.0055) "" 0 7))
-(t.eq (p.parse e.p-edn-type "\\u1f49c") (p.gen-success (e.get-char "💜") "" 0 7))
-(t.eq (p.parse e.p-edn-type "test") (p.gen-success (e.get-symbol nil "test") "" 0 4))
-(t.eq (p.parse e.p-edn-type "test1/test2") (p.gen-success (e.get-symbol "test1" "test2") "" 0 11))
-(t.eq (p.parse e.p-edn-type ":test") (p.gen-success (e.get-keyword nil "test") "" 0 5))
-(t.eq (p.parse e.p-edn-type ":test1/test2") (p.gen-success (e.get-keyword "test1" "test2") "" 0 12))
+(t.eq (p.parse ( e.p-edn-type ) "5.5e-3M") (p.gen-success (e.get-float 0.0055) "" 0 7))
+(t.eq (p.parse ( e.p-edn-type ) "\\u1f49c") (p.gen-success (e.get-char "💜") "" 0 7))
+(t.eq (p.parse ( e.p-edn-type ) "test") (p.gen-success (e.get-symbol nil "test") "" 0 4))
+(t.eq (p.parse ( e.p-edn-type ) "test1/test2") (p.gen-success (e.get-symbol "test1" "test2") "" 0 11))
+(t.eq (p.parse ( e.p-edn-type ) ":test") (p.gen-success (e.get-keyword nil "test") "" 0 5))
+(t.eq (p.parse ( e.p-edn-type ) ":test1/test2") (p.gen-success (e.get-keyword "test1" "test2") "" 0 12))
 
 ; p-list
-(t.eq (p.parse e.p-list "(nil nil nil)") (p.gen-success (e.get-list [(e.get-nil) (e.get-nil) (e.get-nil)]) "" 0 13))
-(t.eq (p.parse e.p-list "(\"test\" 5.1 3 nil)") (p.gen-success (e.get-list [(e.get-string "test") (e.get-float 5.1) (e.get-integer 3) (e.get-nil)]) "" 0 18))
+(t.eq (p.parse ( e.p-list ) "(nil nil nil)") (p.gen-success (e.get-list [(e.get-nil) (e.get-nil) (e.get-nil)]) "" 0 13))
+(t.eq (p.parse ( e.p-list ) "(\"test\" 5.1 3 nil)") (p.gen-success (e.get-list [(e.get-string "test") (e.get-float 5.1) (e.get-integer 3) (e.get-nil)]) "" 0 18))
+(t.eq (p.parse ( e.p-list ) "(1 (2 (3 4) 5) 6)")
+      (p.gen-success (e.get-list [(e.get-integer 1)
+                                  (e.get-list [(e.get-integer 2)
+                                               (e.get-list [(e.get-integer 3) (e.get-integer 4)])
+                                               (e.get-integer 5)])
+                                  (e.get-integer 6)])
+                    "" 0 17))
+
+
 ; (up.pp (p.parse e.p-list "(nil nil nil)"))
 ; (print "\n")
 ; (up.pp (p.parse e.p-list "(\"moin\" 1 5.7)"))

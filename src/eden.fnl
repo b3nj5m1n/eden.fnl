@@ -15,6 +15,7 @@
 (def-type :integer)
 (def-type :float)
 (def-type :list)
+(def-type :vector)
 
 (fn eden.get-symbol [prefix name]
   {:type "symbol" :prefix prefix :name name})
@@ -68,14 +69,16 @@
 
 
 
-(def-parser :p-nil (p.p-map (fn [_] (eden.get-nil)) (p.p-str "nil")))
+(fn eden.p-nil []
+  (p.p-map (fn [_] (eden.get-nil)) (p.p-str "nil")))
 
-(def-parser :p-bool (p.p-map
-                      (fn [s]
-                        (if (= s "true")
-                          (eden.get-bool true)
-                          (eden.get-bool false)))
-                      (p.p-or (p.p-str "true") (p.p-str "false"))))
+(fn eden.p-bool []
+  (p.p-map
+    (fn [s]
+      (if (= s "true")
+        (eden.get-bool true)
+        (eden.get-bool false)))
+    (p.p-or (p.p-str "true") (p.p-str "false"))))
 
 (def-parser :p-escape-char
   (p.p-map (fn [s]
@@ -125,35 +128,36 @@
 (def-parser :p-char-all
   (p.p-choose [eden.p-unicode-char eden.p-edn-char eden.p-escape-char eden.p-redundant-char]))
 
-(def-parser :p-char
+(fn eden.p-char []
   (p.p-map
     (fn [x]
       (eden.get-char x))
     eden.p-char-all))
 
-(def-parser :p-string (p.p-map (fn [s]
-                                 (eden.get-string s))
-                               (p.p-chain
-                                 [(p.p-discard (p.p-char "\""))
-                                  (p.p-str-until (p.p-choose
-                                                   ; [(p.p-map (fn [x] x.value) eden.p-char)
-                                                   [eden.p-char-all
-                                                    (p.p-char-negative "\"")]))
-                                  (p.p-discard (p.p-char "\""))])))
+(fn eden.p-string []
+  (p.p-map (fn [s]
+             (eden.get-string s))
+           (p.p-chain
+             [(p.p-discard (p.p-char "\""))
+              (p.p-str-until (p.p-choose
+                               ; [(p.p-map (fn [x] x.value) eden.p-char)
+                               [eden.p-char-all
+                                (p.p-char-negative "\"")]))
+              (p.p-discard (p.p-char "\""))])))
 
-(def-parser :p-integer
-   (p.p-map-fallible
-     (fn [digits info-result info-input]
-       (local num-as-str (p.result-to-str digits))
-       (let [num (if (= "N" (num-as-str:sub -1)) (num-as-str:sub 1 (- (length num-as-str) 1)) num-as-str)]
-         (if (= nil (tonumber num))
-           (p.gen-failure "Failed parsing to int" info-input.remaining info-input.line info-input.col)
-           (p.gen-success (eden.get-integer (tonumber num)) info-result.remaining info-result.line info-result.col))))
-     (p.p-chain
-       [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
-        eden.p-digit-non-zero
-        (p.p-many eden.p-digit)
-        (p.p-option (p.p-char "N"))])))
+(fn eden.p-integer []
+  (p.p-map-fallible
+    (fn [digits info-result info-input]
+      (local num-as-str (p.result-to-str digits))
+      (let [num (if (= "N" (num-as-str:sub -1)) (num-as-str:sub 1 (- (length num-as-str) 1)) num-as-str)]
+        (if (= nil (tonumber num))
+          (p.gen-failure "Failed parsing to int" info-input.remaining info-input.line info-input.col)
+          (p.gen-success (eden.get-integer (tonumber num)) info-result.remaining info-result.line info-result.col))))
+    (p.p-chain
+      [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
+       eden.p-digit-non-zero
+       (p.p-many eden.p-digit)
+       (p.p-option (p.p-char "N"))])))
 
 (def-parser :p-exponent
    (p.p-map
@@ -169,20 +173,20 @@
            (p.p-char "E")])
         (p.p-many eden.p-digit)])))
 
-(def-parser :p-float
-   (p.p-map-fallible
-     (fn [digits info-result info-input]
-       (local num-as-str (accumulate [result "" i current (ipairs (p.flatten digits))] (.. result current)))
-       (let [num (if (= "M" (num-as-str:sub -1)) (num-as-str:sub 1 (- (length num-as-str) 1)) num-as-str)]
-         (if (= nil (tonumber num))
-           (p.gen-failure "Failed parsing to float" info-input.remaining info-input.line info-input.col)
-           (p.gen-success (eden.get-float (+ 0.0 (tonumber num))) info-result.remaining info-result.line info-result.col))))
-     (p.p-chain
-       [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
-        (p.p-many eden.p-digit)
-        (p.p-option (p.p-chain [(p.p-char ".") (p.p-many eden.p-digit) (p.p-option eden.p-exponent)]))
-        (p.p-option eden.p-exponent)
-        (p.p-option (p.p-char "M"))])))
+(fn eden.p-float []
+  (p.p-map-fallible
+    (fn [digits info-result info-input]
+      (local num-as-str (accumulate [result "" i current (ipairs (p.flatten digits))] (.. result current)))
+      (let [num (if (= "M" (num-as-str:sub -1)) (num-as-str:sub 1 (- (length num-as-str) 1)) num-as-str)]
+        (if (= nil (tonumber num))
+          (p.gen-failure "Failed parsing to float" info-input.remaining info-input.line info-input.col)
+          (p.gen-success (eden.get-float (+ 0.0 (tonumber num))) info-result.remaining info-result.line info-result.col))))
+    (p.p-chain
+      [(p.p-option (p.p-or (p.p-char "-") (p.p-char "+")))
+       (p.p-many eden.p-digit)
+       (p.p-option (p.p-chain [(p.p-char ".") (p.p-many eden.p-digit) (p.p-option eden.p-exponent)]))
+       (p.p-option eden.p-exponent)
+       (p.p-option (p.p-char "M"))])))
            
 (def-parser :p-symbol-part
   (p.p-map
@@ -199,7 +203,7 @@
              [eden.p-letter
               (p.p-option (p.p-many eden.p-valid-symbol-char))]))]))))
 
-(def-parser :p-symbol
+(fn eden.p-symbol []
   (p.p-map
     (fn [x]
       (match (accumulate [result "" i current (ipairs (p.flatten [ x ]))] (.. result current))
@@ -212,38 +216,64 @@
           (p.p-option (p.p-and (p.p-char "/") eden.p-symbol-part))])
        (p.p-char "/")])))
 
-(def-parser :p-keyword
+(fn eden.p-keyword []
   (p.p-map
     (fn [x]
       (eden.symbol-to-keyword x))
-    (p.p-and (p.p-discard (p.p-char ":")) eden.p-symbol)))
+    (p.p-and (p.p-discard (p.p-char ":")) (eden.p-symbol))))
 
-(def-parser :p-edn-type
-  ; (p.p-map
-  ;   (fn [x]
-  ;     (up.pp x)
-  ;     x)
-  (p.p-choose
-   [; eden.p-list
-    eden.p-nil
-    eden.p-string
-    eden.p-float
-    eden.p-integer
-    eden.p-bool
-    eden.p-keyword
-    eden.p-symbol
-    eden.p-char
-    eden.p-list]))
+(fn eden.p-edn-type []
+  (fn [input]
+    (var done false)
+    (var return {})
+    (each [i parser (ipairs
+                      [(eden.p-nil)
+                       (eden.p-list)
+                       (eden.p-string)
+                       (eden.p-float)
+                       (eden.p-integer)
+                       (eden.p-bool)
+                       (eden.p-keyword)
+                       (eden.p-symbol)
+                       (eden.p-char)])]
+      (let [result (parser input)]
+        (if (and (not done) (= result.status p.status.ok))
+          (do
+            (set done true)
+            (set return result)))))
+    (if (not done)
+      (set return (p.gen-failure "Not an edn type" input.remaining input.line input.col)))
+    return))
 
-(def-parser :p-list
+(fn eden.p-list []
   (p.p-map
     (fn [x]
       (eden.get-list x))
     (p.p-chain
       [(p.p-discard (p.p-char "("))
-       (p.p-option eden.p-edn-type)
-       (p.p-many (p.p-and eden.p-whitespace eden.p-edn-type))
+       (p.p-option (eden.p-edn-type))
+       (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type)))
+       eden.p-whitespace-optional
        (p.p-discard (p.p-char ")"))])))
+
+; (def-parser :p-vector
+;   (p.p-map
+;     (fn [x]
+;       (eden.get-vector x))
+;     (p.p-chain
+;       [(p.p-discard (p.p-char "["))
+;        (p.p-option eden.p-edn-type)
+;        (p.p-many (p.p-and eden.p-whitespace eden.p-edn-type))
+;        eden.p-whitespace-optional
+;        (p.p-discard (p.p-char "]"))])))
+
+; (up.pp (p.parse (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type))) "  (nil) nil"))
+; (up.pp (p.parse (eden.p-keyword) ":test"))
+; (up.pp (p.parse ( eden.p-nil ) "nil nil)"))
+; (up.pp (p.parse ( eden.p-edn-type ) "(1 (2 3) 4)"))
+; (up.pp (p.parse ( eden.p-list ) "(nil nil)"))
+; (up.pp eden)
+; (print "\n\n\n")
 
 ; (local t1 (p.parse eden.p-char "\\a"))
 ; (local t2 (p.parse eden.p-char "\\b"))
