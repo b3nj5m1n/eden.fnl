@@ -16,6 +16,8 @@
 (def-type :float)
 (def-type :list)
 (def-type :vector)
+(def-type :map)
+(def-type :set)
 
 (fn eden.get-symbol [prefix name]
   {:type "symbol" :prefix prefix :name name})
@@ -229,6 +231,8 @@
     (each [i parser (ipairs
                       [(eden.p-list)
                        (eden.p-vector)
+                       (eden.p-set)
+                       (eden.p-map)
                        (eden.p-nil)
                        (eden.p-string)
                        (eden.p-float)
@@ -268,11 +272,38 @@
        eden.p-whitespace-optional
        (p.p-discard (p.p-char "]"))])))
 
+(fn eden.p-map []
+  (p.p-map
+    (fn [x]
+      (var result {})
+      (each [i value (ipairs x)]
+        (if (= 1 (% i 2))
+          (tset result value (. x (+ 1 i)))))
+      (eden.get-map result))
+    (p.p-chain
+      [(p.p-discard (p.p-and (p.p-char "{") (p.p-option eden.p-whitespace)))
+       (p.p-option (p.p-chain [(eden.p-edn-type) eden.p-whitespace (eden.p-edn-type)]))
+       (p.p-many (p.p-chain [eden.p-whitespace (eden.p-edn-type) eden.p-whitespace (eden.p-edn-type)]))
+       eden.p-whitespace-optional
+       (p.p-discard (p.p-char "}"))])))
+
+(fn eden.p-set []
+  (p.p-map
+    (fn [x]
+      (eden.get-set x))
+    (p.p-chain
+      [(p.p-discard (p.p-and (p.p-str "#{") (p.p-option eden.p-whitespace)))
+       (p.p-option (eden.p-edn-type))
+       (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type)))
+       eden.p-whitespace-optional
+       (p.p-discard (p.p-char "}"))])))
+
 ; (up.pp (p.parse (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type))) "  (nil) nil"))
 ; (up.pp (p.parse (eden.p-keyword) ":test"))
 ; (up.pp (p.parse ( eden.p-nil ) "nil nil)"))
 ; (up.pp (p.parse ( eden.p-edn-type ) "(1 (2 3) 4)"))
-; (up.pp (p.parse ( eden.p-list ) "(nil nil)"))
+; (up.pp (p.parse ( eden.p-map ) "{ nil nil }"))
+; (up.pp (p.parse ( eden.p-map ) "{ :test 5 }"))
 ; (up.pp eden)
 ; (print "\n\n\n")
 

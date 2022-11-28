@@ -45,7 +45,7 @@
   (local suffix (.. up.separators.comma " "))
   (each [key value (pairs x)]
     ; Colorise key
-    (set result (.. result (sn.color key up.colors.key)))
+    (set result (.. result (up.colorise key)))
     (set result (.. result up.separators.colon " "))
     ; Colorise value
     (set result (.. result (up.colorise value)))
