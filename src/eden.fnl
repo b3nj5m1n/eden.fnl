@@ -19,6 +19,40 @@
 (def-type :map)
 (def-type :set)
 
+(fn eden.result-to-lua [x]
+  (let [t (if (not= nil (. x :result)) (. x :result) x)]
+    ; (up.pp t)
+    (match (. t :type)
+      :nil nil
+      :bool (. t :value)
+      :string (. t :value)
+      :char (. t :value)
+      :integer (. t :value)
+      :float (. t :value)
+      :symbol (.. (if (= nil (. t :prefix)) "" (. t :prefix) ) (if (= nil (. t :prefix)) "" "/") (if (= nil (. t :name)) "" (. t :name)))
+      :keyword (.. ":" (if (= nil (. t :prefix)) "" (. t :prefix) ) (if (= nil (. t :prefix)) "" "/") (if (= nil (. t :name)) "" (. t :name)))
+      :list
+      (do
+        (icollect [_ v (ipairs (. t :value))]
+          (eden.result-to-lua v)))
+      :vector
+      (do
+        (icollect [_ v (ipairs (. t :value))]
+          (eden.result-to-lua v)))
+      :set
+      (do
+        (icollect [_ v (ipairs (. t :value))]
+          (eden.result-to-lua v)))
+      :map
+      (do
+        ; (each [k v (pairs (. t :value))]
+        ;   (up.pp k)
+        ;   (up.pp (eden.result-to-lua k))
+        ;   (up.pp v)
+        ;   (up.pp (eden.result-to-lua v)))
+        (collect [k v (pairs (. t :value))]
+          (values (eden.result-to-lua k) (eden.result-to-lua v)))))))
+
 (fn eden.get-symbol [prefix name]
   {:type "symbol" :prefix prefix :name name})
 (fn eden.get-keyword [prefix name]
@@ -325,13 +359,18 @@
 ; (up.pp (p.table-prepend [t1 t2] t4))
 ; (up.pp (p.table-prepend [1 2] 3))
 
-; (up.pp (p.parse ( eden.p-map ) "{:nrepl {:port 8777} :source-paths [\"src\" \"test\"]}"))
+; (up.pp (p.parse ( eden.p-list ) "(1 2 (3 4))"))
+; (up.pp (eden.result-to-lua (p.parse ( eden.p-list ) "(1 2 (3 4))")))
+; (up.pp (eden.result-to-lua (p.parse ( eden.p-map ) "{ :nrepl {:port 8777} :source-paths [\"src\" \"test\"] }")))
+; (up.pp (eden.result-to-lua (p.parse ( eden.p-map ) "{ :nrepl :port }")))
+; (up.pp (eden.result-to-lua (p.parse ( eden.p-map ) "{ :nrepl {:port 8777} }")))
 
 ; (local file "/home/b3nj4m1n/Documents/Github/cljs-test/shadow-cljs.edn")
 ; (local f (assert (io.open file :rb)))
 ; (local content (f:read :*all))
 ; (f:close)
 
-; (up.pp (p.parse ( eden.p-map ) content))
+; (local content (eden.result-to-lua (p.parse ( eden.p-map ) content)))
+; (up.pp (. content ":builds"))
 
 eden
