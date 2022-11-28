@@ -175,6 +175,7 @@
            (p.p-char "E")])
         (p.p-many eden.p-digit)])))
 
+; TODO this needs to be reworked so ints don't get parsed as floats
 (fn eden.p-float []
   (p.p-map-fallible
     (fn [digits info-result info-input]
@@ -273,17 +274,20 @@
        (p.p-discard (p.p-char "]"))])))
 
 (fn eden.p-map []
-  (p.p-map
-    (fn [x]
-      (var result {})
-      (each [i value (ipairs x)]
-        (if (= 1 (% i 2))
-          (tset result value (. x (+ 1 i)))))
-      (eden.get-map result))
+  (p.p-map-fallible
+    (fn [x info-result info-input]
+      (if (= 0 (% (length x) 2))
+        (do
+          (var result {})
+          (each [i value (ipairs x)]
+            (if (= 1 (% i 2))
+              (tset result value (. x (+ 1 i)))))
+          (p.gen-success (eden.get-map result) info-result.remaining info-result.line info-result.col))
+        (p.gen-failure "Expected even number of values for map" info-input.remaining info-input.line info-input.col)))
     (p.p-chain
       [(p.p-discard (p.p-and (p.p-char "{") (p.p-option eden.p-whitespace)))
-       (p.p-option (p.p-chain [(eden.p-edn-type) eden.p-whitespace (eden.p-edn-type)]))
-       (p.p-many (p.p-chain [eden.p-whitespace (eden.p-edn-type) eden.p-whitespace (eden.p-edn-type)]))
+       (p.p-option (eden.p-edn-type))
+       (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type)))
        eden.p-whitespace-optional
        (p.p-discard (p.p-char "}"))])))
 
@@ -321,5 +325,13 @@
 ; (up.pp (p.table-prepend [t1 t2] t4))
 ; (up.pp (p.table-prepend [1 2] 3))
 
+; (up.pp (p.parse ( eden.p-map ) "{:nrepl {:port 8777} :source-paths [\"src\" \"test\"]}"))
+
+; (local file "/home/b3nj4m1n/Documents/Github/cljs-test/shadow-cljs.edn")
+; (local f (assert (io.open file :rb)))
+; (local content (f:read :*all))
+; (f:close)
+
+; (up.pp (p.parse ( eden.p-map ) content))
 
 eden
