@@ -45,11 +45,6 @@
           (eden.result-to-lua v)))
       :map
       (do
-        ; (each [k v (pairs (. t :value))]
-        ;   (up.pp k)
-        ;   (up.pp (eden.result-to-lua k))
-        ;   (up.pp v)
-        ;   (up.pp (eden.result-to-lua v)))
         (collect [k v (pairs (. t :value))]
           (values (eden.result-to-lua k) (eden.result-to-lua v)))))))
 
@@ -176,7 +171,6 @@
            (p.p-chain
              [(p.p-discard (p.p-char "\""))
               (p.p-str-until (p.p-choose
-                               ; [(p.p-map (fn [x] x.value) eden.p-char)
                                [eden.p-char-all
                                 (p.p-char-negative "\"")]))
               (p.p-discard (p.p-char "\""))])))
@@ -335,42 +329,5 @@
        (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type)))
        eden.p-whitespace-optional
        (p.p-discard (p.p-char "}"))])))
-
-; (up.pp (p.parse (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type))) "  (nil) nil"))
-; (up.pp (p.parse (eden.p-keyword) ":test"))
-; (up.pp (p.parse ( eden.p-nil ) "nil nil)"))
-; (up.pp (p.parse ( eden.p-edn-type ) "(1 (2 3) 4)"))
-; (up.pp (p.parse ( eden.p-map ) "{ nil nil }"))
-; (up.pp (p.parse ( eden.p-map ) "{ :test 5 }"))
-; (up.pp eden)
-; (print "\n\n\n")
-
-; (local t1 (p.parse eden.p-char "\\a"))
-; (local t2 (p.parse eden.p-char "\\b"))
-; (local t3 (p.combine-results t1 t2))
-; (local t4 (p.parse eden.p-char "\\c"))
-; (local t5 (p.combine-results t3 t4))
-; (up.pp (p.parse (p.p-and eden.p-edn-type eden.p-edn-type) "\\a\\b\\c "))
-; (up.pp (p.parse (p.p-many (p.p-choose [ eden.p-nil eden.p-char ])) "nil\\n"))
-; (up.pp (p.parse (p.p-many eden.p-float) "1.1"))
-; (up.pp (p.parse (p.p-many eden.p-edn-type) "nil\\a\\b\\c "))
-; (up.pp t1)
-; (print "\n")
-; (up.pp (p.table-prepend [t1 t2] t4))
-; (up.pp (p.table-prepend [1 2] 3))
-
-; (up.pp (p.parse ( eden.p-list ) "(1 2 (3 4))"))
-; (up.pp (eden.result-to-lua (p.parse ( eden.p-list ) "(1 2 (3 4))")))
-; (up.pp (eden.result-to-lua (p.parse ( eden.p-map ) "{ :nrepl {:port 8777} :source-paths [\"src\" \"test\"] }")))
-; (up.pp (eden.result-to-lua (p.parse ( eden.p-map ) "{ :nrepl :port }")))
-; (up.pp (eden.result-to-lua (p.parse ( eden.p-map ) "{ :nrepl {:port 8777} }")))
-
-; (local file "/home/b3nj4m1n/Documents/Github/cljs-test/shadow-cljs.edn")
-; (local f (assert (io.open file :rb)))
-; (local content (f:read :*all))
-; (f:close)
-
-; (local content (eden.result-to-lua (p.parse ( eden.p-map ) content)))
-; (up.pp (. content ":builds"))
 
 eden

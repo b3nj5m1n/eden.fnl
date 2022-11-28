@@ -65,8 +65,6 @@
   "Split string by delimiter"
   (local x (if (not= nil (. result-1 :result)) result-1.result result-1))
   (local y (if (not= nil (. result-2 :result)) result-2.result result-2))
-  ; (up.pp x)
-  ; (up.pp y)
   (match [x y]
     (where [x y] (and (not (paco.is-empty x)) (not (paco.is-empty y))))
     (do
@@ -256,46 +254,5 @@
 (fn paco.parse [parser input]
   "Apply parser"
   (parser (paco.gen-success "" input 0 0)))
-
-
-(local p-A (paco.p-char "A"))
-(local p-B (paco.p-char "B"))
-(local p-C (paco.p-char "C"))
-(local p-D (paco.p-char "D"))
-(local p-AB (paco.p-and p-A p-B))
-(local p-CD (paco.p-and p-C p-D))
-(local p-A-or-B (paco.p-or p-AB p-CD))
-(local p-ABCD (paco.p-chain [p-A p-B p-C p-D]))
-(local p-A-or-B-or-C (paco.p-choose [p-A p-B p-C]))
-(local p-digit (paco.p-any ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9"]))
-(local p-whitespace (paco.p-map (fn [s] "") (paco.p-many (paco.p-any [" " "\t" "\n"]))))
-(local p-number
-  (paco.p-chain
-    [p-whitespace
-     (paco.p-map
-       (fn [digits]
-         (local num-as-str (accumulate [result "" i current (ipairs digits)] (.. result current)))
-         (tonumber num-as-str))
-       (paco.p-and (paco.p-option (paco.p-char "-")) (paco.p-many1 p-digit)))]))
-
-(local p-quoted-number
-  (paco.p-chain
-    [(paco.p-discard (paco.p-char "\'"))
-     p-number
-     (paco.p-discard (paco.p-char "'"))]))
-
-; (up.pp (paco.parse p-whitespace "   \n1ojnsen"))
-; (up.pp (paco.parse p-whitespace " 1ojnsen"))
-; (up.pp (paco.parse p-number "   69ojnsen"))
-; (up.pp (paco.parse p-number "   -69ojnsen"))
-; (up.pp (paco.parse p-number "5"))
-; (up.pp (paco.parse p-quoted-number "'5'"))
-; (up.pp (paco.parse (paco.p-str "moin") "mojnsen"))
-; (up.pp (paco.parse (paco.p-and p-whitespace p-digit) "   1ojnsen"))
-; (up.pp (paco.parse (paco.p-zero-or-more (paco.p-str "moin")) "moinmoinsen"))
-
-; (up.pp (paco.table-append [1 2 3] 4))
-; (up.pp (paco.is-empty (paco.gen-success "a" 0 0)))
-; (up.pp (paco.combine-results (paco.gen-success "a" 0 0) (paco.gen-success "b" 0 0)))
 
 paco

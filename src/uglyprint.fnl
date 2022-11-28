@@ -1,7 +1,7 @@
 (local sn (require :supernova))
 
 ; Pretty print tables
-; Doesn't work for properly for nil values
+; Doesn't work properly for nil values
 (var up {})
 
 ; https://stackoverflow.com/a/66370080/11110290
@@ -65,7 +65,7 @@
       (set result (.. result up.separators.comma " "))))
   (set result (.. result " " up.separators.parens-close-brackets))
   result)
-               
+
 (fn up.colorise-table [x]
   (if (up.is-array x)
     (up.colorise-array x)
