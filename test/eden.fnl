@@ -178,6 +178,9 @@
                                   (e.get-integer 6)])
                     "" 0 17))
 
+; p-vector
+(t.eq (p.parse ( e.p-vector ) "[ nil nil nil ]") (p.gen-success (e.get-vector [(e.get-nil) (e.get-nil) (e.get-nil)]) "" 0 15))
+
 
 ; (up.pp (p.parse e.p-list "(nil nil nil)"))
 ; (print "\n")

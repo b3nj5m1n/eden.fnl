@@ -227,8 +227,9 @@
     (var done false)
     (var return {})
     (each [i parser (ipairs
-                      [(eden.p-nil)
-                       (eden.p-list)
+                      [(eden.p-list)
+                       (eden.p-vector)
+                       (eden.p-nil)
                        (eden.p-string)
                        (eden.p-float)
                        (eden.p-integer)
@@ -250,22 +251,22 @@
     (fn [x]
       (eden.get-list x))
     (p.p-chain
-      [(p.p-discard (p.p-char "("))
+      [(p.p-discard (p.p-and (p.p-char "(") (p.p-option eden.p-whitespace)))
        (p.p-option (eden.p-edn-type))
        (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type)))
        eden.p-whitespace-optional
        (p.p-discard (p.p-char ")"))])))
 
-; (def-parser :p-vector
-;   (p.p-map
-;     (fn [x]
-;       (eden.get-vector x))
-;     (p.p-chain
-;       [(p.p-discard (p.p-char "["))
-;        (p.p-option eden.p-edn-type)
-;        (p.p-many (p.p-and eden.p-whitespace eden.p-edn-type))
-;        eden.p-whitespace-optional
-;        (p.p-discard (p.p-char "]"))])))
+(fn eden.p-vector []
+  (p.p-map
+    (fn [x]
+      (eden.get-vector x))
+    (p.p-chain
+      [(p.p-discard (p.p-and (p.p-char "[") (p.p-option eden.p-whitespace)))
+       (p.p-option (eden.p-edn-type))
+       (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type)))
+       eden.p-whitespace-optional
+       (p.p-discard (p.p-char "]"))])))
 
 ; (up.pp (p.parse (p.p-many (p.p-and eden.p-whitespace (eden.p-edn-type))) "  (nil) nil"))
 ; (up.pp (p.parse (eden.p-keyword) ":test"))
